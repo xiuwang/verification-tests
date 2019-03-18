@@ -61,13 +61,14 @@ Given /^I have an?( ephemeral| persistent)? jenkins v#{NUMBER} application(?: fr
   cb.jenkins_major_version = version
 
   # wait for actual startup as in 3.10+ it is slow on only 512M pod
-  timeout = 300
   if version == "1"
+    timeout = 300
     wait_string = "Jenkins is fully up and running"
   else
     # seems like recent jenkins has a delay caused by admin monitor
     # here trying to wait for it's operation to finish
     # possible remedy is DISABLE_ADMINISTRATIVE_MONITOR or give mor RAM to pod
+    timeout = 600
     wait_string = "Finished Download metadata."
   end
   started = wait_for(timeout) {
