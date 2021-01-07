@@ -84,6 +84,7 @@ Feature: stibuild.feature
 
   # @author xiuwang@redhat.com
   # @case_id OCP-28891
+  @admin
   Scenario: Test s2i build in disconnect cluster
     Given I have a project
     When I have an http-git service in the project
@@ -95,13 +96,59 @@ Feature: stibuild.feature
     When a pod becomes ready with labels:
       | deploymentconfig=git |
       | deployment=git-2     |
-    Given I obtain test data dir "build/httpd-ex.git"
-    When I run the :cp client command with:
-      | source | httpd-ex.git |
-      | dest   | <%= pod.name %>:/var/lib/git/                       |
     Then the step should succeed
+    Given I obtain test data dir "build/httpd-ex.git/"
+   # When I run the :cp client command with:
+   #   | source | httpd-ex.git |
+   #   | dest   | <%= pod.name %>:/var/lib/git/ | 
+   # Then the step should succeed
+    When 480 seconds have passed
+    When I run the :cp client command with:
+      | source | httpd-ex.git/refs |
+      | dest   | <%= pod.name %>:/var/lib/git/httpd-ex.git | 
+    Then the step should succeed
+   # When I run the :cp client command with:
+   #   | source | httpd-ex.git/refs |
+   #   | dest   | <%= pod.name %>:/var/lib/git/httpd-ex.git/refs | 
+   # When I execute on the pod:
+   #   | bash | -c |cd /tmp ; git clone http://<%= cb.git_route %>/httpd-ex.git |
+   # And the output should not contain:
+   #   | fatal: unable to access |
+   # """
     When I run the :new_app client command with:
       | app_repo | openshift/httpd:latest~http://<%= cb.git_route %>/httpd-ex.git |
     Then the step should succeed
     Given the "httpd-ex-1" build was created
+    When I run the :get client command with:
+      | resource | build/httpd-ex-1 |
+      | o | json |
+    Then the step should succeed
+    When I run the :describe client command with:
+      | resource | builds         |
+      | name     | httpd-ex-1 |
+    Then the step should succeed
+ #   When I run the :start_build client command with:
+ #     | buildconfig | httpd-ex | 
+ #   Then the step should succeed
+ #   When I run the :start_build client command with:
+ #     | buildconfig | httpd-ex | 
+ #   Then the step should succeed
+ #   When I run the :start_build client command with:
+ #     | buildconfig | httpd-ex | 
+ #   Then the step should succeed
+ #   When I run the :start_build client command with:
+ #     | buildconfig | httpd-ex | 
+ #   Then the step should succeed
+ #   When I run the :start_build client command with:
+ #     | buildconfig | httpd-ex | 
+ #   Then the step should succeed
+    When 480 seconds have passed
+ #   When I run the :debug admin command with:
+ #     | resource         | pod/httpd-ex-6-build |
+ #     | oc_opts_end      |                              |
+ #     | exec_command     | git                   |
+ #     | exec_command     | clone                    |
+ #     | exec_command_arg | http://<%= cb.git_route %>/httpd-ex.git |
+ #     | n                | <%= project.name %>          |
+ #   Then the step should succeed
     And the "httpd-ex-1" build completes

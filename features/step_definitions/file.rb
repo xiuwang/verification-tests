@@ -1,20 +1,37 @@
-Given /^I obtain test data (file|dir) #{QUOTED}$/ do |type, path|
+#Given /^I obtain test data (file|dir) #{QUOTED}$/ do |type, path|
+Given /^I obtain test data (file|dir) #{QUOTED}(?: into the #{QUOTED} dir)?$/ do |type, path, dest_dir|
   accepted_roots = [
     "#{BushSlicer::HOME}/testdata",
     "#{BushSlicer::HOME}/features/tierN/testdata",
   ]
   tried_paths = []
+  filename= []
   found = accepted_roots.any? do |root|
-    test_file = "#{root}/#{path}"
-    tried_paths << test_file
-    if File.exist? test_file
-      if type == "dir"
-        FileUtils.cp_r(test_file, File.basename(path))
-        cb.test_file = File.absolute_path(File.basename(path))
-      else 
-        FileUtils.cp(test_file, File.basename(path))
-        cb.test_file = File.absolute_path(File.basename(path))
+   # test_file = "#{root}/#{path}"
+   # tried_paths << test_file
+   # if File.exist? test_file
+    src = "#{root}/#{path}"
+    tried_paths << src
+    if File.exist? src
+      dest = File.basename(path)
+      if dest_dir
+        FileUtils.mkdir_p(dest_dir)
+        dest = File.join(dest_dir, dest)
       end
+      if type == "dir"
+        FileUtils.cp_r(File.join(src, "."), dest)
+        Find.find(src) do |filename|
+          p filename
+        end
+      else
+        FileUtils.cp(src, dest)
+     #   FileUtils.cp_r(test_file, File.basename(path))
+     #   cb.test_file = File.absolute_path(File.basename(path))
+     # else 
+     #   FileUtils.cp(test_file, File.basename(path))
+     #   cb.test_file = File.absolute_path(File.basename(path))
+      end
+      cb.test_file = File.absolute_path(dest)
     end
   end
   raise "could not find test file in '#{tried_paths}'" unless found
